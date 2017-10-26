@@ -48,14 +48,16 @@ T remove_at(std::vector<T>&v, typename std::vector<T>::size_type n)
 
 
 
-Vertex_Num vert_num = 1024;
+Vertex_Num vert_num = 2048;
 //Vertex_Num vert_num = 10;
 Network society(vert_num);
 
 float cnct_prob = (float)4/(float)vert_num;
 float r = 1, p = 0.25, q = 20;
-int duration = 1000;
+int duration;
+int durationc = 1000;
 float t = 0;
+int  runNum = 1;
 int infect_num;
 int lambda;
 //std::vector<Edge> I2;
@@ -66,6 +68,7 @@ std::vector<int> R3;
 
 void init_states()
 {
+	duration = durationc;
 	for( Vertex vd : make_iterator_range( vertices(society) ) )
 	{
 		society[vd].health = 1;
@@ -156,17 +159,17 @@ void recover(int v, Transfer dis)
 int main()
 {
   clock_t begin = clock();
+	std::default_random_engine gen(std::random_device{}());
+	//std::default_random_engine gen;
+	std::ofstream fout;
+	fout.open("cdata.txt");
+	float dt;
+	std::exponential_distribution<float> exp(1);
+	std::uniform_real_distribution<float> choice_maker(0.0,1.0);
 	//I2.reserve(vert_num*4);
 	//I3.reserve(vert_num*4);
 	R2.reserve(vert_num);
 	R3.reserve(vert_num);
-  std::default_random_engine gen(std::random_device{}());
-  //std::default_random_engine gen;
-  std::ofstream fout;
-	fout.open("cdata.txt");
-  float dt;
-  std::exponential_distribution<float> exp(1);
-	std::uniform_real_distribution<float> choice_maker(0.0,1.0);
 
 
 	float cnct_prob = (float)4/(float)vert_num;
@@ -175,69 +178,74 @@ int main()
 
 	for (size_t i = 0; i < vert_num; i++)
 	{
-			for (size_t j = i+1; j < vert_num; j++)
+		for (size_t j = i+1; j < vert_num; j++)
+		{
+			if ( dice(cnct_prob) )
 			{
-				if ( dice(cnct_prob) )
+				add_edge(i, j, society);
+				add_edge(j, i, society);
+			}
+		}
+	}
+
+		for (size_t x=0; x<=0; x++)
+		{
+			for (size_t run = 0; run < runNum; run++)
+			{
+			Edge_Num edge_num = num_edges(society);
+			init_states();
+
+		  for (size_t i = 0; t<duration && (R2.size() + R3.size() )>0 ; i++)
+		  {
+				lambda = edge_num + R2.size() + R3.size();
+		    dt = exp(gen);
+		    //fout<<dt<<'\n';
+				t += (float) dt/lambda;
+
+				auto choice = choice_maker(gen);
+				auto alpha = (float) r * R2.size() / (q* edge_num + r * R2.size() + r * R3.size() );
+				auto beta = (float) (r * R2.size() + r * R3.size() ) / (q* edge_num + r * R2.size() + r * R3.size() ) ;
+				if (choice < alpha )
 				{
-					add_edge(i, j, society);
-					add_edge(j, i, society);
+					Transfer dis = dis_one;
+					int locator = int (choice_maker(gen) * R2.size());
+					recover( locator , dis );
+
+				}
+				else if ( choice < beta )
+				{
+					Transfer dis = dis_two;
+					int locator = int (choice_maker(gen) * R3.size());
+					recover( locator , dis );
+				}
+
+				else
+				{
+					fout <<(float) t << '\n';
+					auto e = random_edge(society, gen);
+
+					Transfer dis;
+
+					if (dice(0.5))
+						dis = dis_one;
+					else
+						dis = dis_two;
+					infect (e, dis);
+
+				}
+				//active sites:
+				/*
+				std::cout << '\n';
+				for (size_t i = 0; i < R2.size(); i++)
+					std::cout << i << " R2: " << R2[i] << ": " << society[R2[i]].health << '\n';
+
+				std::cout << "******" << '\n';
+				for (size_t i = 0; i < R3.size(); i++)
+					std::cout << i << " R3: " << R3[i] << ": " << society[R3[i]].health << '\n';
+					*/
 				}
 			}
 		}
-
-	Edge_Num edge_num = num_edges(society);
-	init_states();
-
-  for (size_t i = 0; t<duration && (R2.size() + R3.size() )>0 ; i++)
-  {
-		lambda = edge_num + R2.size() + R3.size();
-    dt = exp(gen);
-    //fout<<dt<<'\n';
-		t += (float) dt/lambda;
-
-		auto choice = choice_maker(gen);
-		auto alpha = (float) r * R2.size() / (q* edge_num + r * R2.size() + r * R3.size() );
-		auto beta = (float) (r * R2.size() + r * R3.size() ) / (q* edge_num + r * R2.size() + r * R3.size() ) ;
-		if (choice < alpha )
-		{
-			Transfer dis = dis_one;
-			int locator = int (choice_maker(gen) * R2.size());
-			recover( locator , dis );
-
-		}
-		else if ( choice < beta )
-		{
-			Transfer dis = dis_two;
-			int locator = int (choice_maker(gen) * R3.size());
-			recover( locator , dis );
-		}
-
-		else
-		{
-			fout <<(float) t << '\n';
-			auto e = random_edge(society, gen);
-
-			Transfer dis;
-
-			if (dice(0.5))
-				dis = dis_one;
-			else
-				dis = dis_two;
-			infect (e, dis);
-
-		}
-		//active sites:
-		/*
-		std::cout << '\n';
-		for (size_t i = 0; i < R2.size(); i++)
-			std::cout << i << " R2: " << R2[i] << ": " << society[R2[i]].health << '\n';
-
-		std::cout << "******" << '\n';
-		for (size_t i = 0; i < R3.size(); i++)
-			std::cout << i << " R3: " << R3[i] << ": " << society[R3[i]].health << '\n';
-			*/
-  }
-
 	std::cout << "t: " << t << '\n';
 	clock_t end = clock();
 	float elapsed_secs = float(end - begin) / CLOCKS_PER_SEC;
