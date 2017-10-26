@@ -53,7 +53,7 @@ Vertex_Num vert_num = 1024;
 Network society(vert_num);
 
 float cnct_prob = (float)4/(float)vert_num;
-float r = 1, p = 0.25, q = 2;
+float r = 1, p = 0.25, q = 20;
 int duration = 1000;
 float t = 0;
 int infect_num;
@@ -226,10 +226,6 @@ int main()
 			infect (e, dis);
 
 		}
-		//std::cout << "size 2: " << R2.size() << '\n';
-		//std::cout << "size 3: " << R3.size() << '\n';
-		//std::cout << "infect_num: " <<  infect_num << '\n';
-
 		//active sites:
 		/*
 		std::cout << '\n';
