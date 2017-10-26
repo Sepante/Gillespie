@@ -31,7 +31,8 @@
 *.out
 *.app
 a.out
-run.out
+run
 
 # data files:
+*.txt
 cdata.txt
