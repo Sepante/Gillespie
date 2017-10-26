@@ -14,7 +14,8 @@ class SIR
 	Transfer supply();
 	void turn_I(Transfer supply);
 	Transfer update();
-	
+	void turn_R(Transfer dis);
+
 };
 
 

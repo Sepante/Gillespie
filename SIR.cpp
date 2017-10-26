@@ -74,3 +74,18 @@ void SIR::turn_I(Transfer supply)
 		}
 		//std::cout << health << '\n';
 	};
+
+Transfer SIR::update()
+{
+	//health = supply()*future;
+	health = future;
+	//future = health;
+	return supply();
+}
+
+
+void SIR::turn_R(Transfer dis)
+{
+	health *= dis;
+	future *= dis;
+}
