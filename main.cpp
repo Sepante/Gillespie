@@ -48,16 +48,17 @@ T remove_at(std::vector<T>&v, typename std::vector<T>::size_type n)
 
 
 
-Vertex_Num vert_num = 40000;
+Vertex_Num vert_num = 1024;
 //Vertex_Num vert_num = 10;
 Network society(vert_num);
 
 float cnct_prob = (float)4/(float)vert_num;
-float r = 1, p = 0.25, q = 2;
+float r = 1, p = 0.25, q = 1.5;
 int duration;
-int durationc = 1000;
+int durationc = 1000000;
 float t = 0;
-int  runNum = 1;
+//int  runNum = 1000;
+int  runNum = 100;
 int infect_num;
 int lambda;
 //std::vector<Edge> I2;
@@ -69,6 +70,7 @@ std::vector<int> R3;
 
 void init_states()
 {
+	t = 0;
 	duration = durationc;
 	for( Vertex vd : make_iterator_range( vertices(society) ) )
 	{
@@ -76,8 +78,8 @@ void init_states()
 		society[vd].future = 1;
 	}
 	infect_num = 1;
-	//int seed = rand() % vert_num;
-	int seed = 0;
+	int seed = rand() % vert_num;
+	//int seed = 0;
 	Vertex v = vertex(seed, society);
 	society[v].health = 6;
 	society[v].future = 6;
@@ -214,6 +216,22 @@ void recover(int v, Transfer dis)
 
 
 	}
+	void cons_Erdos()
+	{
+		society.clear();
+		for (size_t i = 0; i < vert_num; i++)
+		{
+			for (size_t j = i+1; j < vert_num; j++)
+			{
+				if ( dice(cnct_prob) )
+				{
+					add_edge(i, j, society);
+					add_edge(j, i, society);
+				}
+			}
+		}
+	std::cout << "Erdos runnin" << '\n';
+	}
 
 int main()
 {
@@ -223,7 +241,42 @@ int main()
 	std::default_random_engine gen(std::random_device{}());
 	//std::default_random_engine gen(121);
 	std::ofstream fout;
+	std::ofstream tout;
 	fout.open("cdata.txt");
+	tout.open("timed_data.txt");
+	/*
+	fout << 1 << '\n';
+	fout << 1 << '\n';
+	fout << 1 << '\n';
+	fout << vert_num;
+	fout << vert_num;
+	fout << vert_num;
+	*/
+	std::vector<int> n_set={1024};
+	std::vector<float> p_set={0.1, 0.3, 0.4, 0.5, 0.6, 0.8, 0.9, 1};
+	std::vector<float> q_set={0.1 ,0.5, 0.8, 1};
+	std::vector<float> r_set={0.1 ,0.5, 0.8, 1};
+	q_set={1.5};
+	p_set={0.375};
+	r_set={1};
+
+	fout<<n_set.size()<<"\n";
+	fout<<p_set.size()<<"\n";
+	fout<<q_set.size()<<"\n";
+	fout<<r_set.size()<<"\n";
+	fout<<runNum<<"\n";
+
+	tout << runNum <<'\n';
+
+	for(int nindex=0; nindex<=n_set.size()-1; nindex++)
+		fout<<n_set[nindex]<<"\n";
+	for(int pindex=0; pindex<=p_set.size()-1; pindex++)
+		fout<<p_set[pindex]<<"\n";
+	for(int qindex=0; qindex<=q_set.size()-1; qindex++)
+		fout<<q_set[qindex]<<"\n";
+	for(int rindex=0; rindex<=r_set.size()-1; rindex++)
+		fout<<r_set[rindex]<<"\n";
+
 	float dt;
 	std::exponential_distribution<float> exp(1);
 	std::uniform_real_distribution<float> choice_maker(0.0,1.0);
@@ -235,29 +288,19 @@ int main()
 
 	float cnct_prob = (float)4/(float)vert_num;
 
-  //Erdos Renyi constructor.
-
-	for (size_t i = 0; i < vert_num; i++)
-	{
-		for (size_t j = i+1; j < vert_num; j++)
-		{
-			if ( dice(cnct_prob) )
-			{
-				add_edge(i, j, society);
-				add_edge(j, i, society);
-			}
-		}
-	}
-	std::cout << "Erdos runnin" << '\n';
-
 		for (size_t x=0; x<=0; x++)
 		{
+			vert_num = n_set[0];
+			//Erdos Renyi constructor.
+			cnct_prob = (float)4/(float)vert_num;
+			cons_Erdos();
 			for (size_t run = 0; run < runNum; run++)
 			{
 			Edge_Num edge_num = num_edges(society);
 			init_states();
 
-		  for (size_t i = 0; t<duration && (R2.size() + R3.size() )>0 ; i++)
+		  //for (size_t i = 0; t<duration && (R2.size() + R3.size() )>0 ; i++)
+			for (size_t i = 0; (R2.size() + R3.size() )>0 ; i++)
 		  {
 				lambda = I[0].size() + I[1].size() + R2.size() + R3.size();
 		    dt = exp(gen);
@@ -284,7 +327,7 @@ int main()
 
 				else if ( choice < gamma )
 				{
-					fout <<(float) t << '\n';
+					tout <<(float) t << '\n';
 
 					int locator = int (choice_maker(gen) * I[0].size());
 					auto e = I[0][locator];
@@ -293,14 +336,14 @@ int main()
 				}
 				else
 				{
-					fout <<(float) t << '\n';
+					tout <<(float) t << '\n';
 
 					int locator = int (choice_maker(gen) * I[1].size());
 					auto e = I[1][locator];
 					Transfer dis = dis_two;
 					infect (e, dis);
 				}
-				std::cout << "infect_num: " << infect_num << '\n';
+				//std::cout << "infect_num: " << infect_num << '\n';
 				//active sites:
 				/*
 				std::cout << '\n';
@@ -313,6 +356,10 @@ int main()
 					//std::cout << I[0] << '\n';
 
 				}
+				tout << -1 << '\n';
+				fout << infect_num << '\n';
+				if(run % 1 == 0)
+					std::cout << run << '\n';
 			}
 		}
 	std::cout << "t: " << t << '\n';
