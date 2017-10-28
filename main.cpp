@@ -20,11 +20,12 @@ class Interaction
 public:
 	int trans = 0;
 };
-
 //typedef adjacency_list<listS, vecS, undirectedS, SIR, Interaction> Network;
-
 //typedef adjacency_list<listS, vecS, undirectedS, SIR> Network;
-typedef adjacency_list<vecS, vecS, bidirectionalS, SIR, Interaction> Network;
+
+typedef adjacency_list<vecS, vecS, undirectedS, SIR, Interaction> Network;
+//typedef adjacency_list<vecS, vecS, bidirectionalS, SIR, Interaction> Network;
+
 typedef graph_traits<Network>::edges_size_type Edge_Num;
 typedef graph_traits<Network>::vertices_size_type Vertex_Num;
 typedef graph_traits<Network>::vertex_iterator Vertex_iter;
@@ -47,18 +48,16 @@ T remove_at(std::vector<T>&v, typename std::vector<T>::size_type n)
 }
 
 
-
-Vertex_Num vert_num = 1024;
-//Vertex_Num vert_num = 10;
+Vertex_Num vert_num;
 Network society(vert_num);
 
-float cnct_prob = (float)4/(float)vert_num;
+//float cnct_prob = (float)4/(float)vert_num;
 float r = 1, p = 0.25, q = 1.5;
 int duration;
 int durationc = 1000000;
 float t = 0;
-//int  runNum = 1000;
-int  runNum = 100;
+int  runNum = 50000;
+//int  runNum = 100;
 int infect_num;
 int lambda;
 //std::vector<Edge> I2;
@@ -145,93 +144,84 @@ void recover(int v, Transfer dis)
 
 }
 
-	void infect(Edge e, Transfer dis)
+void infect(Edge e, Transfer dis)
+{
+	bool change = false;
+	if ( society[source(e, society)].supply() % dis == 0 && society[target(e, society)].demand() % dis == 0 )
 	{
-		bool change = false;
-		if ( society[source(e, society)].supply() % dis == 0 && society[target(e, society)].demand() % dis == 0 )
+		if (society[target(e, society)].health != 1)
+			change = true;
+		else if (dice(0.25) )
 		{
-			if (society[target(e, society)].health != 1)
-				change = true;
-			else if (dice(0.25) )
-			{
-					change = true;
-					infect_num++;
-			}
-
-			if (change)
-			{
-				int target_v = target(e, society);
-				//std::cout << "targ: " << target(e, society) << '\n';
-				if (dis == dis_one)
-				{
-					R2.push_back(target(e, society));
-
-				}
-				else if (dis == dis_two)
-				{
-					R3.push_back(target(e, society));
-
-				}
-
-				society[target(e, society)].future *= dis;
-				society[target(e, society)].update();
-				//std::cout << "original:  " << society[target(e, society)].health << '\n';
-				//std::cout << "duplicate: " << society[target_v].health << '\n';
-
-				for ( Edge ei : make_iterator_range( out_edges(target_v, society) ) )
-				{
-					if( society[target(ei, society)].demand() % dis == 0 )
-					{
-							I[dis - 2].push_back(ei);
-					}
-				}
-				for ( Edge ei : make_iterator_range( in_edges(target_v, society) ) )
-				{
-					if( society[source(ei, society)].supply() % dis == 0 )
-					{
-						//std::cout << "in style: " << '\n';
-						//std::cout << I[dis - 2].size() << '\n';
-						auto it = std::find(I[dis - 2].begin(), I[dis - 2].end(), ei);
-						//for (size_t i = 0; i < I[dis - 2].size(); i++) {
-//							std::cout << I[dis - 2][i] << '\n';
-						//}
-
-						if (it != I[dis - 2].end())
-						{
-							// swap the one to be removed with the last element
-							// and remove the item at the end of the container
-							// to prevent moving all items after 'ei' by one
-							std::swap(*it, I[dis - 2].back());
-							I[dis - 2].pop_back();
-						}
-						//std::cout << I[dis - 2].size() << '\n';
-						//std::cout << "****" << '\n';
-					}
-
-				}
-
-
-			}
+			change = true;
+			infect_num++;
 		}
-
-
-	}
-	void cons_Erdos()
-	{
-		society.clear();
-		for (size_t i = 0; i < vert_num; i++)
+		if (change)
 		{
-			for (size_t j = i+1; j < vert_num; j++)
+			int target_v = target(e, society);
+			//std::cout << "targ: " << target(e, society) << '\n';
+			if (dis == dis_one)
 			{
-				if ( dice(cnct_prob) )
+				R2.push_back(target(e, society));
+			}
+			else if (dis == dis_two)
+			{
+				R3.push_back(target(e, society));
+			}
+			society[target(e, society)].future *= dis;
+			society[target(e, society)].update();
+			//std::cout << "original:  " << society[target(e, society)].health << '\n';
+			//std::cout << "duplicate: " << society[target_v].health << '\n';
+			for ( Edge ei : make_iterator_range( out_edges(target_v, society) ) )
+			{
+				if( society[target(ei, society)].demand() % dis == 0 )
 				{
-					add_edge(i, j, society);
-					add_edge(j, i, society);
+					I[dis - 2].push_back(ei);
+				}
+			}
+			for ( Edge ei : make_iterator_range( in_edges(target_v, society) ) )
+			{
+				if( society[source(ei, society)].supply() % dis == 0 )
+				{
+					//std::cout << "in style: " << '\n';
+					//std::cout << I[dis - 2].size() << '\n';
+					auto it = std::find(I[dis - 2].begin(), I[dis - 2].end(), ei);
+					//for (size_t i = 0; i < I[dis - 2].size(); i++) {
+						//std::cout << I[dis - 2][i] << '\n';
+					//}
+					if (it != I[dis - 2].end())
+					{
+						// swap the one to be removed with the last element
+						// and remove the item at the end of the container
+						// to prevent moving all items after 'ei' by one
+						std::swap(*it, I[dis - 2].back());
+						I[dis - 2].pop_back();
+					}
+					//std::cout << I[dis - 2].size() << '\n';
+					//std::cout << "****" << '\n';
 				}
 			}
 		}
-	std::cout << "Erdos runnin" << '\n';
 	}
+}
+
+void cons_Erdos(int n)
+{
+	float cnct_prob = (float)4/(float)n;
+	society.clear();
+	for (size_t i = 0; i < n; i++)
+	{
+		for (size_t j = i+1; j < n; j++)
+		{
+			if ( dice(cnct_prob) )
+			{
+				add_edge(i, j, society);
+				//add_edge(j, i, society);
+			}
+		}
+	}
+	//std::cout << "Erdos running" << '\n';
+}
 
 int main()
 {
@@ -244,15 +234,11 @@ int main()
 	std::ofstream tout;
 	fout.open("cdata.txt");
 	tout.open("timed_data.txt");
-	/*
-	fout << 1 << '\n';
-	fout << 1 << '\n';
-	fout << 1 << '\n';
-	fout << vert_num;
-	fout << vert_num;
-	fout << vert_num;
-	*/
-	std::vector<int> n_set={1024};
+
+
+	std::vector<int> n_set={128, 256, 512,1024, 2048, 4096, 8192, 16384};
+	//std::vector<int> n_set={8192};
+	//std::vector<int> n_set={128};
 	std::vector<float> p_set={0.1, 0.3, 0.4, 0.5, 0.6, 0.8, 0.9, 1};
 	std::vector<float> q_set={0.1 ,0.5, 0.8, 1};
 	std::vector<float> r_set={0.1 ,0.5, 0.8, 1};
@@ -286,14 +272,14 @@ int main()
 	R3.reserve(vert_num);
 
 
-	float cnct_prob = (float)4/(float)vert_num;
+	//float cnct_prob = (float)4/(float)vert_num;
 
-		for (size_t x=0; x<=0; x++)
+		for(int nindex=0; nindex<=n_set.size()-1; nindex++)
 		{
-			vert_num = n_set[0];
+			vert_num = n_set[nindex];
 			//Erdos Renyi constructor.
-			cnct_prob = (float)4/(float)vert_num;
-			cons_Erdos();
+			//cnct_prob = (float)4/(float)vert_num;
+			cons_Erdos(vert_num);
 			for (size_t run = 0; run < runNum; run++)
 			{
 			Edge_Num edge_num = num_edges(society);
@@ -358,8 +344,9 @@ int main()
 				}
 				tout << -1 << '\n';
 				fout << infect_num << '\n';
-				if(run % 1 == 0)
-					std::cout << run << '\n';
+				if(run % 500 == 0)
+					std::cout << "n: " << vert_num << ", p: " << p << ", q: " << q << ", run: " << run << std::endl;
+					//std::cout << run << '\n';
 			}
 		}
 	std::cout << "t: " << t << '\n';
