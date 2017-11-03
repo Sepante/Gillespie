@@ -15,6 +15,7 @@
 
 using namespace boost;
 
+
 class Interaction
 {
 public:
@@ -53,10 +54,11 @@ Network society(vert_num);
 
 //float cnct_prob = (float)4/(float)vert_num;
 float r = 1, p = 0.25, q = 1.5;
+float rate_difference;
 int duration;
 int durationc = 1000000;
 float t = 0;
-int  runNum = 50000;
+int  runNum = 1000;
 //int  runNum = 100;
 int infect_num;
 int lambda;
@@ -82,6 +84,8 @@ void init_states()
 	Vertex v = vertex(seed, society);
 	society[v].health = 6;
 	society[v].future = 6;
+	//society[v].health = 2;
+	//society[v].future = 2;
 	//society_origin = Network(society);
 	I[0] = {};
 	I[1] = {};
@@ -151,7 +155,7 @@ void infect(Edge e, Transfer dis)
 	{
 		if (society[target(e, society)].health != 1)
 			change = true;
-		else if (dice(0.25) )
+		else if (dice(rate_difference) )
 		{
 			change = true;
 			infect_num++;
@@ -233,17 +237,18 @@ int main()
 	std::ofstream fout;
 	std::ofstream tout;
 	fout.open("cdata.txt");
-	tout.open("timed_data.txt");
+	//tout.open("timed_data.txt");
 
 
-	std::vector<int> n_set={128, 256, 512,1024, 2048, 4096, 8192, 16384};
-	//std::vector<int> n_set={8192};
+	//std::vector<int> n_set={128, 256, 512,1024, 2048, 4096, 8192, 16384};
+	std::vector<int> n_set={4096};
 	//std::vector<int> n_set={128};
-	std::vector<float> p_set={0.1, 0.3, 0.4, 0.5, 0.6, 0.8, 0.9, 1};
+	std::vector<float> p_set={0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5};
+	//	std::vector<float> p_set={0.8, 0.9, 1};
 	std::vector<float> q_set={0.1 ,0.5, 0.8, 1};
 	std::vector<float> r_set={0.1 ,0.5, 0.8, 1};
 	q_set={1.5};
-	p_set={0.375};
+	//p_set={0.375};
 	r_set={1};
 
 	fout<<n_set.size()<<"\n";
@@ -252,7 +257,7 @@ int main()
 	fout<<r_set.size()<<"\n";
 	fout<<runNum<<"\n";
 
-	tout << runNum <<'\n';
+	//tout << runNum <<'\n';
 
 	for(int nindex=0; nindex<=n_set.size()-1; nindex++)
 		fout<<n_set[nindex]<<"\n";
@@ -273,88 +278,96 @@ int main()
 
 
 	//float cnct_prob = (float)4/(float)vert_num;
+	int count = 1;
 
-		for(int nindex=0; nindex<=n_set.size()-1; nindex++)
+	for (size_t pindex = 0; pindex < p_set.size(); pindex++)
+	{
+		p = p_set[pindex];
+		rate_difference = p / q;
+		for (size_t qindex = 0; qindex < q_set.size(); qindex++)
 		{
-			vert_num = n_set[nindex];
-			//Erdos Renyi constructor.
-			//cnct_prob = (float)4/(float)vert_num;
-			cons_Erdos(vert_num);
-			for (size_t run = 0; run < runNum; run++)
+			q = q_set[qindex];
+			for(int nindex=0; nindex<=n_set.size()-1; nindex++)
 			{
-			Edge_Num edge_num = num_edges(society);
-			init_states();
-
-		  //for (size_t i = 0; t<duration && (R2.size() + R3.size() )>0 ; i++)
-			for (size_t i = 0; (R2.size() + R3.size() )>0 ; i++)
-		  {
-				lambda = I[0].size() + I[1].size() + R2.size() + R3.size();
-		    dt = exp(gen);
-		    //fout<<dt<<'\n';
-				t += (float) dt/lambda;
-
-				auto choice = choice_maker(gen);
-				auto alpha = (float) r * R2.size() / (q* (I[0].size() + I[1].size()) + r * R2.size() + r * R3.size() );
-				auto beta = (float) (r * R2.size() + r * R3.size() ) / (q* (I[0].size() + I[1].size()) + r * R2.size() + r * R3.size() ) ;
-				auto gamma = (float) (r * R2.size() + r * R3.size() + q* (I[0].size()) ) / (q* (I[0].size() + I[1].size()) + r * R2.size() + r * R3.size() ) ;
-				if (choice < alpha )
+				vert_num = n_set[nindex];
+				//Erdos Renyi constructor.
+				//cnct_prob = (float)4/(float)vert_num;
+				cons_Erdos(vert_num);
+				for (size_t run = 0; run < runNum; run++)
 				{
-					Transfer dis = dis_one;
-					int locator = int (choice_maker(gen) * R2.size());
-					recover( locator , dis );
+				Edge_Num edge_num = num_edges(society);
+				init_states();
 
+			  //for (size_t i = 0; t<duration && (R2.size() + R3.size() )>0 ; i++)
+				for (size_t i = 0; (R2.size() + R3.size() )>0 ; i++)
+			  {
+					lambda = I[0].size() + I[1].size() + R2.size() + R3.size();
+			    dt = exp(gen);
+			    //fout<<dt<<'\n';
+					t += (float) dt/lambda;
+
+					auto choice = choice_maker(gen);
+					auto alpha = (float) r * R2.size() / (q* (I[0].size() + I[1].size()) + r * R2.size() + r * R3.size() );
+					auto beta = (float) (r * R2.size() + r * R3.size() ) / (q* (I[0].size() + I[1].size()) + r * R2.size() + r * R3.size() ) ;
+					auto gamma = (float) (r * R2.size() + r * R3.size() + q* (I[0].size()) ) / (q* (I[0].size() + I[1].size()) + r * R2.size() + r * R3.size() ) ;
+					if (choice < alpha )
+					{
+						Transfer dis = dis_one;
+						int locator = int (choice_maker(gen) * R2.size());
+						recover( locator , dis );
+
+					}
+					else if ( choice < beta )
+					{
+						Transfer dis = dis_two;
+						int locator = int (choice_maker(gen) * R3.size());
+						recover( locator , dis );
+					}
+
+					else if ( choice < gamma )
+					{
+						//tout <<(float) t << '\n';
+
+						int locator = int (choice_maker(gen) * I[0].size());
+						auto e = I[0][locator];
+						Transfer dis = dis_one;
+						infect (e, dis);
+					}
+					else
+					{
+						//tout <<(float) t << '\n';
+
+						int locator = int (choice_maker(gen) * I[1].size());
+						auto e = I[1][locator];
+						Transfer dis = dis_two;
+						infect (e, dis);
+					}
+					//std::cout << "infect_num: " << infect_num << '\n';
+					//active sites:
+					/*
+					std::cout << '\n';
+					for (size_t i = 0; i < R2.size(); i++)
+						std::cout << i << " R2: " << R2[i] << ": " << society[R2[i]].health << '\n';
+						*/
+
+					//std::cout << "******" << '\n';
+					//for (size_t i = 0; i < I[0].size(); i++)
+						//std::cout << I[0] << '\n';
+
+					}
+					//tout << -1 << '\n';
+					fout << infect_num << '\n';
+					if(run % 200 == 0)
+						std::cout << "n: " << vert_num << ", p: " << p << ", q: " << q << ", run: " << run << std::endl;
+						//std::cout << run << '\n';
 				}
-				else if ( choice < beta )
-				{
-					Transfer dis = dis_two;
-					int locator = int (choice_maker(gen) * R3.size());
-					recover( locator , dis );
-				}
-
-				else if ( choice < gamma )
-				{
-					tout <<(float) t << '\n';
-
-					int locator = int (choice_maker(gen) * I[0].size());
-					auto e = I[0][locator];
-					Transfer dis = dis_one;
-					infect (e, dis);
-				}
-				else
-				{
-					tout <<(float) t << '\n';
-
-					int locator = int (choice_maker(gen) * I[1].size());
-					auto e = I[1][locator];
-					Transfer dis = dis_two;
-					infect (e, dis);
-				}
-				//std::cout << "infect_num: " << infect_num << '\n';
-				//active sites:
-				/*
-				std::cout << '\n';
-				for (size_t i = 0; i < R2.size(); i++)
-					std::cout << i << " R2: " << R2[i] << ": " << society[R2[i]].health << '\n';
-					*/
-
-				//std::cout << "******" << '\n';
-				//for (size_t i = 0; i < I[0].size(); i++)
-					//std::cout << I[0] << '\n';
-
-				}
-				tout << -1 << '\n';
-				fout << infect_num << '\n';
-				if(run % 500 == 0)
-					std::cout << "n: " << vert_num << ", p: " << p << ", q: " << q << ", run: " << run << std::endl;
-					//std::cout << run << '\n';
 			}
 		}
+	}
 	std::cout << "t: " << t << '\n';
 	clock_t end = clock();
 	float elapsed_secs = float(end - begin) / CLOCKS_PER_SEC;
 	std::cout << "time: " << elapsed_secs << '\n';
-	std::cout << "size: " << I[0].size() << '\n';
-	std::cout << "size: " << I[1].size() << '\n';
 	std::cout << num_edges(society) << '\n';
   std::cout << "END" << '\n';
 }

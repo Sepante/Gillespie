@@ -42,35 +42,39 @@ runNum = int(data.pop(0))
 nrange = [ data.pop(0) for i in range(n_size)]
 prange = [ data.pop(0) for i in range(p_size)]
 qrange = [ data.pop(0) for i in range(q_size)]
-rrange = [ data.pop(0) for i in range(q_size)]
+rrange = [ data.pop(0) for i in range(r_size)]
 
 data =( np.array(data) )
+#data =( np.array(data).reshape(p_size, q_size, runNum) )
 #"""
-for nindex in [7]:
-#for nindex in range(n_size):
-    n = nrange[nindex]
-    current_data = data[nindex*runNum : (nindex+1)*runNum]
-    binned_data =( binned(current_data, 1, np.max(current_data), 200000, log = True,returnwidth = True ) )
-    binned_data[1] /= (runNum) #normalizing the bin numbers to one to create the probabiltly.
-    binned_data[1] /= (binned_data[2]+1) #changing the probabilty distribution to the probability density.
+#for nindex in [7]:
+for nindex in range(n_size):
+    for qindex in range(q_size):
+        n = nrange[nindex]
+        #current_data = data[nindex*runNum : (nindex+1)*runNum]
+        current_data = data[nindex*runNum : (nindex+1)*runNum]
+        binned_data =( binned(current_data, 1, np.max(current_data), 200000, log = True,returnwidth = True ) )
+        binned_data[1] /= (runNum) #normalizing the bin numbers to one to create the probabiltly.
+        binned_data[1] /= (binned_data[2]+1) #changing the probabilty distribution to the probability density.
+        
+        #plt.bar(binned_data[0], binned_data[1], binned_data[2])
+        plt.plot(binned_data[0], binned_data[1] )
+        #plt.bar(binned_data[0], binned_data[1]/n, binned_data[2])
+        #plt.bar(binned_data[0], binned_data[1], wi
+        #plt.suptitle("$Erdos$, $p= %.2f$, $q= %.2f$ , $r= %.2f$, $N= %d$"%(prange[0],qrange[qindex],rrange[0],n))
+        #plt.suptitle("$one dis$ ,$Erdos$, $p= %.2f$, $q= %.2f$ , $r= %.2f$, $N= %d$"%(prange[0],qrange[qindex],rrange[0],n))
+        #plt.ylim([10**-13,10**2])
+        #plt.xlim([10**0,10**5])
+        plt.xlabel('$mass$')
+        plt.ylabel('$P(m)$')
+        plt.gca().set_xscale("log")
+        plt.gca().set_yscale("log")
+        #plt.savefig("n"%n)
+        plt.savefig("n="+str(n)+", p="+str(prange[0])+ ", q=" + str(qrange[qindex]) + ", r=" + str(rrange[0]) + ".png")
+        #plt.savefig("one_ dis"+"n="+str(n)+", p="+str(prange[0])+ ", q=" + str(qrange[qindex]) + ", r=" + str(rrange[0]) + ".png")
     
-    #plt.bar(binned_data[0], binned_data[1], binned_data[2])
-    plt.plot(binned_data[0], binned_data[1] )
-    #plt.bar(binned_data[0], binned_data[1]/n, binned_data[2])
-    #plt.bar(binned_data[0], binned_data[1], wi
-    plt.suptitle("$Erdos$, $p= %.2f$, $q= %.2f$ , $r= %.2f$, $N= %d$"%(prange[0],qrange[0],rrange[0],n))
-    #plt.ylim([10**-13,10**2])
-    #plt.xlim([10**0,10**5])
-    plt.xlabel('$mass$')
-    plt.ylabel('$P(m)$')
-    plt.gca().set_xscale("log")
-    plt.gca().set_yscale("log")
-    #plt.savefig("n"%n)
-    #plt.savefig("Instant{}, {}.png".format(n))
-    plt.savefig("n="+str(n)+", p="+str(prange[0])+ ", q=" + str(qrange[0]) + ", r=" + str(rrange[0]) + ".png")
-
-    plt.show()
-    
+        plt.show()
+        
 
     
     #plt.ylim([0,10000])
@@ -80,7 +84,7 @@ for nindex in [7]:
     
 #"""
 
-    #"""
+    """
     #in this part we found the slope of the bins in the left part of the plot.
     
     cons = 100000 #cons is the largest value of x which the linear behaviour on the loglog plot continues. also depends on the number of the bins (binNum).
@@ -107,4 +111,4 @@ for nindex in [7]:
     plt.gca().set_xscale("log")
     plt.gca().set_yscale("log")
     plt.show()
-    #"""
+    """
