@@ -58,13 +58,13 @@ float rate_difference;
 int duration;
 int durationc = 1000000;
 float t = 0;
-int  runNum = 200;
+int  runNum = 1000;
 //int  runNum = 100;
 int infect_num;
 int lambda;
-//std::vector<Edge> I2;
-//std::vector<Edge> I3;
+
 std::vector<std::vector<Edge> > I(2);
+std::vector<std::vector<Edge> > first_I(2);
 std::vector<std::vector<int> > R(2);
 
 
@@ -86,6 +86,8 @@ void init_states()
 	//society[v].health = 2;
 	//society[v].future = 2;
 	//society_origin = Network(society);
+	first_I[0] = {};
+	first_I[1] = {};
 	I[0] = {};
 	I[1] = {};
 	R[0] = {};
@@ -95,8 +97,10 @@ void init_states()
 	//for ( Vertex vi : make_iterator_range( adjacent_vertices(seed, society) ) )
 	for ( Edge vi : make_iterator_range( out_edges(seed, society) ) )
 	{
-		I[0].push_back(vi);
-		I[1].push_back(vi);
+		//I[0].push_back(vi);
+		//I[1].push_back(vi);
+		first_I[0].push_back(vi);
+		first_I[1].push_back(vi);
 	}
 }
 
@@ -111,23 +115,34 @@ void recover(int v, Transfer dis)
 	for ( Edge ei : make_iterator_range( out_edges(vert, society) ) )
 	{
 		//std::cout << ei << '\n';
-		if( society[target(ei, society)].demand() % dis == 0 )
+		if( society[target(ei, society)].demand() % dis == 0 ) //if this edge was in action list
 		{
-			//std::cout << "in_state" << '\n';
-			//std::cout << I[dis - 2].size() << '\n';
-			auto it = std::find(I[dis - 2].begin(), I[dis - 2].end(), ei);
-			//std::cout << *it << '\n';
-
-			if (it != I[dis - 2].end())
+			if (society[target(ei, society)].health != 1)
 			{
-			  // swap the one to be removed with the last element
-			  // and remove the item at the end of the container
-			  // to prevent moving all items after 'ei' by one
-			  std::swap(*it, I[dis - 2].back());
-			  I[dis - 2].pop_back();
+				auto it = std::find(I[dis - 2].begin(), I[dis - 2].end(), ei);
+
+				if (it != I[dis - 2].end())
+				{
+					// swap the one to be removed with the last element
+					// and remove the item at the end of the container
+					// to prevent moving all items after 'ei' by one
+					std::swap(*it, I[dis - 2].back());
+					I[dis - 2].pop_back();
+				}
 			}
-			//std::cout << I[dis - 2].size() << '\n';
-			//std::cout << "****" << '\n';
+			else //target is in state S
+			{
+				auto it = std::find(first_I[dis - 2].begin(), first_I[dis - 2].end(), ei);
+
+				if (it != first_I[dis - 2].end())
+				{
+					// swap the one to be removed with the last element
+					// and remove the item at the end of the container
+					// to prevent moving all items after 'ei' by one
+					std::swap(*it, first_I[dis - 2].back());
+					first_I[dis - 2].pop_back();
+				}
+			}
 
 		}
 	}
@@ -135,61 +150,81 @@ void recover(int v, Transfer dis)
 
 }
 
-void infect(Edge e, Transfer dis)
+void infect(Edge e, Transfer dis, bool first_infect)
 {
-	bool change = false;
+	//bool first_infect = false;
 	if ( society[source(e, society)].supply() % dis == 0 && society[target(e, society)].demand() % dis == 0 )
 	{
-		if (society[target(e, society)].health != 1)
-			change = true;
-		else if (dice(rate_difference) )
+		if ( first_infect )
 		{
-			change = true;
+			//change for SIS
 			infect_num++;
 		}
-		if (change)
+			//needs to get fixed.
+		if (true)
 		{
 			int target_v = target(e, society);
 			//std::cout << "targ: " << target(e, society) << '\n';
-			if (dis == dis_one)
-			{
-				R[0].push_back(target(e, society));
-			}
-			else if (dis == dis_two)
-			{
-				R[1].push_back(target(e, society));
-			}
+			R[dis - 2].push_back(target(e, society));
 			society[target(e, society)].future *= dis;
 			society[target(e, society)].update();
-			//std::cout << "original:  " << society[target(e, society)].health << '\n';
-			//std::cout << "duplicate: " << society[target_v].health << '\n';
+			//the node can transmit the disease now.
 			for ( Edge ei : make_iterator_range( out_edges(target_v, society) ) )
 			{
 				if( society[target(ei, society)].demand() % dis == 0 )
-				{
-					I[dis - 2].push_back(ei);
-				}
+					if (society[target(ei, society)].health != 1)
+						I[dis - 2].push_back(ei);
+					else //the neighbor is S.
+						first_I[dis - 2].push_back(ei);
 			}
+			//the node won't accept the disease anymore.
 			for ( Edge ei : make_iterator_range( in_edges(target_v, society) ) )
 			{
 				if( society[source(ei, society)].supply() % dis == 0 )
 				{
-					//std::cout << "in style: " << '\n';
-					//std::cout << I[dis - 2].size() << '\n';
-					auto it = std::find(I[dis - 2].begin(), I[dis - 2].end(), ei);
-					//for (size_t i = 0; i < I[dis - 2].size(); i++) {
-						//std::cout << I[dis - 2][i] << '\n';
-					//}
-					if (it != I[dis - 2].end())
+					if( !first_infect )
 					{
-						// swap the one to be removed with the last element
-						// and remove the item at the end of the container
-						// to prevent moving all items after 'ei' by one
-						std::swap(*it, I[dis - 2].back());
-						I[dis - 2].pop_back();
+						auto it = std::find(I[dis - 2].begin(), I[dis - 2].end(), ei);
+						if (it != I[dis - 2].end())
+						{
+							std::swap(*it, I[dis - 2].back());
+							I[dis - 2].pop_back();
+						}
 					}
-					//std::cout << I[dis - 2].size() << '\n';
-					//std::cout << "****" << '\n';
+					else //first_infect
+					{
+						auto it = std::find(first_I[dis - 2].begin(), first_I[dis - 2].end(), ei);
+						if (it != first_I[dis - 2].end())
+						{
+							std::swap(*it, first_I[dis - 2].back());
+							first_I[dis - 2].pop_back();
+						}
+					}
+
+				}
+
+			}
+			if(first_infect)
+			{
+				auto other_dis = ( (dis+1) % 2 ) + 2;
+				for ( Edge ei : make_iterator_range( in_edges(target_v, society) ) )
+				{
+					//cut every item from this guy in the first_I vector and paste it to the I vector.
+					if( society[source(ei, society)].supply() % other_dis == 0 )
+					{
+						auto it = std::find(first_I[other_dis - 2].begin(), first_I[other_dis - 2].end(), ei);
+						if (it != first_I[other_dis - 2].end())
+						{
+							std::swap(*it, first_I[other_dis - 2].back());
+							first_I[other_dis - 2].pop_back();
+
+							I[other_dis - 2].push_back(ei);
+						}
+						//std::cout << I[dis - 2].size() << '\n';
+						//std::cout << "****" << '\n';
+					}
+
+
 				}
 			}
 		}
@@ -228,13 +263,13 @@ int main()
 
 
 	//std::vector<int> n_set={128, 256, 512,1024, 2048, 4096, 8192, 16384};
-	std::vector<int> n_set={2048};
+	std::vector<int> n_set={16384};
 	std::vector<float> p_set={0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
-	//	std::vector<float> p_set={0.8, 0.9, 1};
+	//std::vector<float> p_set={0.8, 0.9, 1};
 	std::vector<float> q_set={0.1 ,0.5, 0.8, 1};
 	std::vector<float> r_set={0.1 ,0.5, 0.8, 1};
 	q_set={1.5};
-	p_set={0.375};
+	//p_set={0.375};
 	//q_set={1};
 	//p_set={0.25};
 	r_set={1};
@@ -279,7 +314,7 @@ int main()
 			p = p_set[pindex];
 			for (size_t qindex = 0; qindex < q_set.size(); qindex++)
 			{
-				rate_difference = p / q;
+				//rate_difference = p / q;
 				q = q_set[qindex];
 			/*
 			for(int nindex=0; nindex<=n_set.size()-1; nindex++)
@@ -291,64 +326,75 @@ int main()
 				*/
 				for (size_t run = 0; run < runNum; run++)
 				{
-				Edge_Num edge_num = num_edges(society);
-				init_states();
+					Edge_Num edge_num = num_edges(society);
+					init_states();
 
-			  //for (size_t i = 0; t<duration && (R[0].size() + R[1].size() )>0 ; i++)
-				for (size_t i = 0; (R[0].size() + R[1].size() )>0 ; i++)
-			  {
-					lambda = I[0].size() + I[1].size() + R[0].size() + R[1].size();
-			    dt = exp(gen);
-			    //fout<<dt<<'\n';
-					t += (float) dt/lambda;
+				  //for (size_t i = 0; t<duration && (R[0].size() + R[1].size() )>0 ; i++)
+					for (size_t i = 0; (R[0].size() + R[1].size() )>0 ; i++)
+				  {
+						lambda = I[0].size() + I[1].size() + R[0].size() + R[1].size();
+				    dt = exp(gen);
+				    //fout<<dt<<'\n';
+						t += (float) dt/lambda;
+						auto p0chance = p* (first_I[0].size() );
+						auto p1chance = p* (first_I[1].size() );
+						auto q0chance = q* I[0].size();
+						auto q1chance = q* I[1].size();
+						auto r0chance = r * R[0].size();
+						auto r1chance = r * R[1].size();
+						auto chance_sum = q0chance + q1chance + p0chance + p1chance + r0chance + r1chance;
 
-					auto choice = choice_maker(gen);
-					auto alpha = (float) r * R[0].size() / (q* (I[0].size() + I[1].size()) + r * R[0].size() + r * R[1].size() );
-					auto beta = (float) (r * R[0].size() + r * R[1].size() ) / (q* (I[0].size() + I[1].size()) + r * R[0].size() + r * R[1].size() ) ;
-					auto gamma = (float) (r * R[0].size() + r * R[1].size() + q* (I[0].size()) ) / (q* (I[0].size() + I[1].size()) + r * R[0].size() + r * R[1].size() ) ;
-					if (choice < alpha )
-					{
-						Transfer dis = dis_one;
-						int locator = int (choice_maker(gen) * R[0].size());
-						recover( locator , dis );
+						auto choice = choice_maker(gen);
+						auto alpha = (float) r0chance / ( chance_sum );
+						auto beta = (float) ( r0chance + r1chance ) / ( chance_sum ) ;
+						auto gamma = (float) ( r0chance + r1chance + q0chance ) / ( chance_sum ) ;
+						auto jhi = float ( r0chance + r1chance + q0chance + q1chance ) / ( chance_sum ) ;
+						auto leo = float ( r0chance + r1chance + q0chance + q1chance + p0chance ) / ( chance_sum ) ;
+						if (choice < alpha )
+						{
+							Transfer dis = dis_one;
+							int locator = int (choice_maker(gen) * R[0].size());
+							recover( locator , dis );
+						}
+						else if ( choice < beta )
+						{
+							Transfer dis = dis_two;
+							int locator = int (choice_maker(gen) * R[1].size());
+							recover( locator , dis );
+						}
 
-					}
-					else if ( choice < beta )
-					{
-						Transfer dis = dis_two;
-						int locator = int (choice_maker(gen) * R[1].size());
-						recover( locator , dis );
-					}
+						else if ( choice < gamma )
+						{
+							//tout <<(float) t << '\n';
 
-					else if ( choice < gamma )
-					{
-						//tout <<(float) t << '\n';
+							int locator = int (choice_maker(gen) * I[0].size());
+							auto e = I[0][locator];
+							Transfer dis = dis_one;
+							infect (e, dis, 0);
+						}
+						else if ( choice < jhi )
+						{
+							//tout <<(float) t << '\n';
 
-						int locator = int (choice_maker(gen) * I[0].size());
-						auto e = I[0][locator];
-						Transfer dis = dis_one;
-						infect (e, dis);
-					}
-					else
-					{
-						//tout <<(float) t << '\n';
-
-						int locator = int (choice_maker(gen) * I[1].size());
-						auto e = I[1][locator];
-						Transfer dis = dis_two;
-						infect (e, dis);
-					}
-					//std::cout << "infect_num: " << infect_num << '\n';
-					//active sites:
-					/*
-					std::cout << '\n';
-					for (size_t i = 0; i < R[0].size(); i++)
-						std::cout << i << " R[0]: " << R[0][i] << ": " << society[R[0][i]].health << '\n';
-						*/
-
-					//std::cout << "******" << '\n';
-					//for (size_t i = 0; i < I[0].size(); i++)
-						//std::cout << I[0] << '\n';
+							int locator = int (choice_maker(gen) * I[1].size());
+							auto e = I[1][locator];
+							Transfer dis = dis_two;
+							infect (e, dis, 0);
+						}
+						else if (choice < leo)
+						{
+							int locator = int (choice_maker(gen) * first_I[0].size());
+							auto e = first_I[0][locator];
+							Transfer dis = dis_one;
+							infect (e, dis, 1);
+						}
+						else
+						{
+							int locator = int (choice_maker(gen) * first_I[1].size());
+							auto e = first_I[1][locator];
+							Transfer dis = dis_two;
+							infect (e, dis, 1);
+						}
 
 					}
 					//tout << -1 << '\n';
@@ -364,5 +410,4 @@ int main()
 	clock_t end = clock();
 	float elapsed_secs = float(end - begin) / CLOCKS_PER_SEC;
 	std::cout << "time: " << elapsed_secs << '\n';
-  std::cout << "END" << '\n';
 }
