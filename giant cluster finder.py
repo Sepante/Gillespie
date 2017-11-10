@@ -48,6 +48,6 @@ plt.plot(nrange, np.max(data,1),'-o')
 name_string = "$Gillespie$"+" $Giant Cluster: $"+ ", $p=$" + str(prange[0]) + ", $q=$" + str(qrange[0]) + ", $r=$" + str(rrange[0])
 location = "results/"
 plt.suptitle(name_string)
-
+name_string = name_string.replace('$','')
 plt.savefig(location+name_string+".png")
 #plt.plot(nrange, np.max(data,1)/nrange,'-o')

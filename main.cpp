@@ -263,7 +263,7 @@ int main()
 
 
 	//std::vector<int> n_set={128, 256, 512,1024, 2048, 4096, 8192, 16384};
-	std::vector<int> n_set={16384};
+	std::vector<int> n_set={512};
 	std::vector<float> p_set={0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
 	//std::vector<float> p_set={0.8, 0.9, 1};
 	std::vector<float> q_set={0.1 ,0.5, 0.8, 1};

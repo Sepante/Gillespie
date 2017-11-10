@@ -62,7 +62,6 @@ for nindex in range(n_size):
         #plt.bar(binned_data[0], binned_data[1]/n, binned_data[2])
         #plt.bar(binned_data[0], binned_data[1], wi
         name_string = "$Gillespie$"+" $Erdos: $"+ ", $n=$" + str(nrange[nindex]) + ", $p=$" + str(prange[0]) + ", $q=$" + str(qrange[0]) + ", $r=$" + str(rrange[0])
-        #plt.suptitle("$Erdos$, $p= %.2f$, $q= %.2f$ , $r= %.2f$, $N= %d$"%(prange[0],qrange[qindex],rrange[0],n))
         plt.suptitle(name_string)
         #plt.suptitle("$one dis$ ,$Erdos$, $p= %.2f$, $q= %.2f$ , $r= %.2f$, $N= %d$"%(prange[0],qrange[qindex],rrange[0],n))
         #plt.ylim([10**-13,10**2])
@@ -74,6 +73,7 @@ for nindex in range(n_size):
         #plt.savefig("n"%n)
         #plt.savefig("n="+str(n)+", p="+str(prange[0])+ ", q=" + str(qrange[qindex]) + ", r=" + str(rrange[0]) + ".png")
         location = "results/"
+        name_string = name_string.replace('$','')
         plt.savefig(location+name_string+".png")
         #plt.savefig("one_ dis"+"n="+str(n)+", p="+str(prange[0])+ ", q=" + str(qrange[qindex]) + ", r=" + str(rrange[0]) + ".png")
     
