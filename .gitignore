@@ -36,3 +36,5 @@ run
 # data files:
 *.txt
 cdata.txt
+*/*.png
+*.png
