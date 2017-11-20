@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 
-with open('16384_onedis.txt') as f:
-#with open('cdata.txt') as f:
+#with open('16384_onedis.txt') as f:
+with open('cdata.txt') as f:
     data=[float(i) for i in f]
 
 n_size = int(data.pop(0))
@@ -28,12 +28,12 @@ for i in range(len(qrange)):
     for j in range(runNum):
         plt.plot(prange, data[:,i,j],'-.')
 """
-
+opacity_num = 50 * 1/runNum
 cmap = mpl.cm.rainbow
 for qindex in range(q_size):
     q=qrange[qindex]
     for run in range(runNum):
-        plt.plot(prange, data[:,qindex,run],'o' , color='b' )
+        plt.plot(prange, data[:,qindex,run],'o' , color='g', alpha=opacity_num )
     #plt.suptitle("$2DGrid$ $ q= %.1f$, $N= %d$"%(q,n))
     #plt.suptitle("$Erdos$ $ q= %.1f$, $N= %d$"%(q,n))
     #plt.suptitle("$Phase: $"+" $n=$"+str(n)+ ", $q=$" + str(qrange[qindex]) + ", $r=$" + str(rrange[0]))

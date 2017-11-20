@@ -3,54 +3,11 @@
 #include <random>
 #include <fstream>
 
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/edge_list.hpp>
-#include <boost/graph/graph_utility.hpp>
-#include <boost/graph/properties.hpp>
-#include <boost/graph/random.hpp>
-#include <boost/config.hpp>
-
 #include "SIR.h"
 #include "global.h"
+#include "graphfuncs.h"
 
 using namespace boost;
-
-
-class Interaction
-{
-public:
-	int trans = 0;
-};
-//typedef adjacency_list<listS, vecS, undirectedS, SIR, Interaction> Network;
-//typedef adjacency_list<listS, vecS, undirectedS, SIR> Network;
-
-typedef adjacency_list<vecS, vecS, undirectedS, SIR, Interaction> Network;
-//typedef adjacency_list<vecS, vecS, bidirectionalS, SIR, Interaction> Network;
-
-typedef graph_traits<Network>::edges_size_type Edge_Num;
-typedef graph_traits<Network>::vertices_size_type Vertex_Num;
-typedef graph_traits<Network>::vertex_iterator Vertex_iter;
-typedef graph_traits<Network>::vertex_descriptor Vertex;
-typedef graph_traits<Network>::edge_descriptor Edge;
-typedef graph_traits<Network>::edge_iterator Edge_iter;
-
-template <typename T>
-T remove_at(std::vector<T>&v, typename std::vector<T>::size_type n)
-{
-  if( v.size()>=1)
-  {
-    T ans = std::move_if_noexcept(v[n]);
-    v[n] = std::move_if_noexcept(v.back());
-    v.pop_back();
-    return ans;
-  }
-  else
-    std::cout << "no element to delete from" << '\n';
-}
-
-
-Vertex_Num vert_num;
-Network society(vert_num);
 
 //float cnct_prob = (float)4/(float)vert_num;
 float r = 1, p = 0.25, q = 1.5;
@@ -63,9 +20,6 @@ int  runNum = 1000;
 int infect_num;
 int lambda;
 
-std::vector<std::vector<Edge> > I(2);
-std::vector<std::vector<Edge> > first_I(2);
-std::vector<std::vector<int> > R(2);
 
 
 void init_states()
@@ -264,7 +218,7 @@ int main()
 
 	//std::vector<int> n_set={128, 256, 512,1024, 2048, 4096, 8192, 16384};
 	std::vector<int> n_set={512};
-	std::vector<float> p_set={0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+	std::vector<float> p_set={0.1, 0.2, 0.3, 0.4, 0.5};
 	//std::vector<float> p_set={0.8, 0.9, 1};
 	std::vector<float> q_set={0.1 ,0.5, 0.8, 1};
 	std::vector<float> r_set={0.1 ,0.5, 0.8, 1};
